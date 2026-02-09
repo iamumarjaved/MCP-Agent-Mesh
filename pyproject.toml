@@ -1,0 +1,139 @@
+[tool.poetry]
+name = "mcp-agent-mesh"
+version = "1.0.0"
+description = "AI-powered multi-agent system for business intelligence using the Model Context Protocol"
+authors = ["MCP Agent Mesh Team"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+# Web framework
+fastapi = "^0.115.0"
+uvicorn = {version = "^0.34.0", extras = ["standard"]}
+pydantic = "^2.10.0"
+pydantic-settings = "^2.7.0"
+
+# Redis
+redis = {version = "^5.2.0", extras = ["hiredis"]}
+
+# LLM / Agent framework
+langchain = "^0.3.0"
+langgraph = "^0.2.0"
+langchain-openai = "^0.3.0"
+
+# Data processing
+pandas = "^2.2.0"
+numpy = "^2.1.0"
+scikit-learn = "^1.6.0"
+scipy = "^1.14.0"
+statsmodels = "^0.14.0"
+
+# Visualization
+plotly = "^6.0.0"
+matplotlib = "^3.10.0"
+
+# Dashboard
+streamlit = "^1.41.0"
+
+# MCP SDK
+mcp = "^1.2.0"
+
+# Logging
+structlog = "^24.4.0"
+
+# Config
+pyyaml = "^6.0"
+
+# Auth
+python-jose = {version = "^3.3.0", extras = ["cryptography"]}
+
+# HTTP client
+httpx = "^0.28.0"
+
+# Vector database
+qdrant-client = "^1.12.0"
+
+# Observability
+langfuse = "^2.57.0"
+
+[tool.poetry.group.dev.dependencies]
+# Testing
+pytest = "^8.3.0"
+pytest-asyncio = "^0.24.0"
+pytest-cov = "^6.0.0"
+pytest-xdist = "^3.5.0"
+
+# Load testing
+locust = "^2.32.0"
+
+# Linting & formatting
+ruff = "^0.8.0"
+mypy = "^1.13.0"
+
+# Pre-commit
+pre-commit = "^4.0.0"
+
+# WebSocket client for demos
+websockets = "^14.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+# ---------------------------------------------------------------------------
+# Tool configuration
+# ---------------------------------------------------------------------------
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "SIM",  # flake8-simplify
+    "TCH",  # flake8-type-checking
+    "RUF",  # ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in argument defaults
+    "RUF012", # mutable class variables
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+disallow_untyped_defs = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests",
+    "e2e: marks end-to-end tests",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::UserWarning",
+]

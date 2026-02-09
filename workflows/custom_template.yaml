@@ -1,0 +1,112 @@
+# ============================================================================
+# Custom Workflow Template
+# ============================================================================
+#
+# Use this template to define new analysis workflows. Copy this file,
+# rename it, and modify the steps to match your use case.
+#
+# Available agents:
+#   - data-ingestion-v1  : Data loading, cleaning, profiling
+#   - analytics-v1       : Statistics, trends, anomaly detection
+#   - insight-generator-v1 : Knowledge retrieval, narrative generation
+#   - presentation-v1    : Charts, dashboards, report compilation
+#
+# Available actions per agent:
+#
+#   data-ingestion-v1:
+#     - ingest_and_clean     (source, cleaning_operations)
+#     - profile_data         ()
+#
+#   analytics-v1:
+#     - run_statistics        (columns)
+#     - analyze_trends        (date_column, value_column, period)
+#     - detect_anomalies      (column, method, threshold)
+#     - aggregate_by_dimension (group_by, agg_func)
+#     - compare_targets       (metrics)
+#
+#   insight-generator-v1:
+#     - retrieve_benchmarks    (source, metrics)
+#     - search_knowledge_base  (categories, top_k)
+#     - generate_insights      (focus_areas)
+#
+#   presentation-v1:
+#     - generate_charts        (chart_types)
+#     - compile_report         (format, sections)
+#     - create_dashboard       (widgets)
+#
+# Timeout formats: "30s", "5m", "1h", "1h30m"
+# ============================================================================
+
+name: custom_workflow_name
+description: >
+  Brief description of what this workflow does and when it should be
+  triggered.
+version: "1.0"
+
+triggers:
+  - keywords:
+      - keyword1
+      - keyword2
+      - keyword3
+
+steps:
+  # Phase 1: Data Loading
+  - id: load_data
+    agent: data-ingestion-v1
+    action: ingest_and_clean
+    params:
+      source: data/sample/your_data.csv
+      cleaning_operations:
+        - dedup
+        - impute
+    depends_on: []
+    timeout: "60s"
+    retry: 3
+
+  # Phase 2: Analysis
+  - id: analyze
+    agent: analytics-v1
+    action: run_statistics
+    params:
+      columns: []
+    depends_on:
+      - load_data
+    timeout: "2m"
+    retry: 2
+
+  # Phase 3: Insights
+  - id: insights
+    agent: insight-generator-v1
+    action: generate_insights
+    params:
+      focus_areas:
+        - key_findings
+        - recommendations
+    depends_on:
+      - analyze
+    timeout: "3m"
+    retry: 2
+
+  # Phase 4: Report
+  - id: report
+    agent: presentation-v1
+    action: compile_report
+    params:
+      format: html
+      sections:
+        - executive_summary
+        - analysis
+        - recommendations
+    depends_on:
+      - insights
+    timeout: "2m"
+    retry: 2
+
+# Optional: Define approval gates that pause execution for human review
+approval_gates:
+  - after: insights
+    condition: "quality_score < 0.7"
+
+# Optional: Configure notifications
+notifications:
+  on_complete: webhook

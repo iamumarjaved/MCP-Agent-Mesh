@@ -1,0 +1,122 @@
+{
+  "industry": "Technology / SaaS",
+  "period": "2025",
+  "source": "Synthetic benchmark data for development",
+  "last_updated": "2025-10-01",
+  "metrics": {
+    "revenue_growth_yoy": {
+      "p25": 0.08,
+      "p50": 0.15,
+      "p75": 0.25,
+      "top_quartile": 0.30,
+      "unit": "percentage",
+      "description": "Year-over-year revenue growth rate"
+    },
+    "gross_margin": {
+      "p25": 0.55,
+      "p50": 0.65,
+      "p75": 0.75,
+      "top_quartile": 0.80,
+      "unit": "percentage",
+      "description": "Gross profit as percentage of revenue"
+    },
+    "net_margin": {
+      "p25": 0.05,
+      "p50": 0.12,
+      "p75": 0.20,
+      "top_quartile": 0.25,
+      "unit": "percentage",
+      "description": "Net income as percentage of revenue"
+    },
+    "customer_retention": {
+      "p25": 0.80,
+      "p50": 0.88,
+      "p75": 0.93,
+      "top_quartile": 0.96,
+      "unit": "percentage",
+      "description": "Annual customer retention rate"
+    },
+    "customer_acquisition_cost": {
+      "p25": 800,
+      "p50": 500,
+      "p75": 300,
+      "top_quartile": 200,
+      "unit": "usd",
+      "description": "Average cost to acquire a new customer"
+    },
+    "ltv_cac_ratio": {
+      "p25": 1.5,
+      "p50": 3.0,
+      "p75": 5.0,
+      "top_quartile": 7.0,
+      "unit": "ratio",
+      "description": "Customer lifetime value to acquisition cost ratio"
+    },
+    "revenue_per_employee": {
+      "p25": 150000,
+      "p50": 250000,
+      "p75": 400000,
+      "top_quartile": 500000,
+      "unit": "usd",
+      "description": "Annual revenue divided by headcount"
+    },
+    "nps_score": {
+      "p25": 20,
+      "p50": 40,
+      "p75": 60,
+      "top_quartile": 75,
+      "unit": "score",
+      "description": "Net Promoter Score (-100 to 100)"
+    },
+    "rule_of_40": {
+      "p25": 20,
+      "p50": 35,
+      "p75": 50,
+      "top_quartile": 60,
+      "unit": "percentage",
+      "description": "Growth rate + profit margin (target > 40%)"
+    },
+    "net_revenue_retention": {
+      "p25": 95,
+      "p50": 105,
+      "p75": 115,
+      "top_quartile": 130,
+      "unit": "percentage",
+      "description": "Revenue retained from existing customers including expansion"
+    }
+  },
+  "regional_multipliers": {
+    "North America": 1.00,
+    "Europe": 0.90,
+    "Asia Pacific": 1.10,
+    "Latin America": 0.75,
+    "Middle East": 0.85
+  },
+  "segment_benchmarks": {
+    "Enterprise": {
+      "avg_deal_size": 85000,
+      "sales_cycle_days": 120,
+      "win_rate": 0.25
+    },
+    "SMB": {
+      "avg_deal_size": 15000,
+      "sales_cycle_days": 45,
+      "win_rate": 0.35
+    },
+    "Startup": {
+      "avg_deal_size": 5000,
+      "sales_cycle_days": 21,
+      "win_rate": 0.40
+    },
+    "Government": {
+      "avg_deal_size": 120000,
+      "sales_cycle_days": 180,
+      "win_rate": 0.20
+    },
+    "Education": {
+      "avg_deal_size": 25000,
+      "sales_cycle_days": 90,
+      "win_rate": 0.30
+    }
+  }
+}
