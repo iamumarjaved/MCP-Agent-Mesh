@@ -1,0 +1,120 @@
+name: market_research
+description: >
+  Market research and competitive analysis workflow. Gathers industry
+  data, benchmarks, and publicly available information to produce a
+  comprehensive competitive landscape report.
+version: "1.0"
+
+triggers:
+  - keywords:
+      - market research
+      - competitive analysis
+      - competitive landscape
+      - market intelligence
+      - industry analysis
+
+steps:
+  - id: gather_benchmarks
+    agent: insight-generator-v1
+    action: retrieve_benchmarks
+    params:
+      source: data/sample/industry_benchmarks.json
+      metrics:
+        - revenue_growth_yoy
+        - gross_margin
+        - net_margin
+        - customer_retention
+        - nps_score
+    depends_on: []
+    timeout: "1m"
+    retry: 2
+
+  - id: knowledge_search
+    agent: insight-generator-v1
+    action: search_knowledge_base
+    params:
+      categories:
+        - market_research
+        - strategy
+        - sales
+      top_k: 5
+    depends_on: []
+    timeout: "1m"
+    retry: 2
+
+  - id: internal_data
+    agent: data-ingestion-v1
+    action: ingest_and_clean
+    params:
+      source: data/sample/sales_q4_2025.csv
+      cleaning_operations:
+        - dedup
+    depends_on: []
+    timeout: "60s"
+    retry: 3
+
+  - id: internal_stats
+    agent: analytics-v1
+    action: run_statistics
+    params:
+      columns:
+        - revenue
+        - units_sold
+    depends_on:
+      - internal_data
+    timeout: "2m"
+    retry: 2
+
+  - id: competitive_analysis
+    agent: insight-generator-v1
+    action: generate_insights
+    params:
+      focus_areas:
+        - competitive_positioning
+        - market_share_estimates
+        - product_gap_analysis
+        - pricing_comparison
+    depends_on:
+      - gather_benchmarks
+      - knowledge_search
+      - internal_stats
+    timeout: "5m"
+    retry: 2
+
+  - id: charts
+    agent: presentation-v1
+    action: generate_charts
+    params:
+      chart_types:
+        - benchmark_radar
+        - market_positioning_scatter
+    depends_on:
+      - competitive_analysis
+      - gather_benchmarks
+    timeout: "2m"
+    retry: 1
+
+  - id: report
+    agent: presentation-v1
+    action: compile_report
+    params:
+      format: html
+      sections:
+        - executive_summary
+        - market_overview
+        - competitive_landscape
+        - benchmark_comparison
+        - swot_analysis
+        - strategic_recommendations
+    depends_on:
+      - competitive_analysis
+      - charts
+    timeout: "3m"
+    retry: 2
+
+approval_gates:
+  - after: competitive_analysis
+    condition: "quality_score < 0.7"
+
+notifications:
+  on_complete: webhook

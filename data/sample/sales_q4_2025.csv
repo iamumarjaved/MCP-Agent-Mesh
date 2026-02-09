@@ -1,0 +1,99 @@
+date,product,region,revenue,units_sold,discount,customer_segment
+2025-10-01,Widget Pro,North America,124750.50,250,0.0,Enterprise
+2025-10-02,Gadget X,Europe,89430.25,68,0.05,SMB
+2025-10-03,Sensor V1,Asia Pacific,15680.00,196,0.10,Startup
+2025-10-04,Module Alpha,North America,52498.75,150,0.0,Government
+2025-10-05,Platform Premium,Europe,269991.00,90,0.10,Enterprise
+2025-10-07,Widget Lite,Latin America,31998.00,160,0.0,Education
+2025-10-08,Gadget Y,Asia Pacific,107999.40,120,0.0,Enterprise
+2025-10-09,Sensor V2,North America,45497.50,350,0.15,SMB
+2025-10-10,Module Beta,Middle East,37498.50,150,0.0,Startup
+2025-10-12,Widget Pro,Europe,112275.45,225,0.10,Enterprise
+2025-10-13,Platform Base,North America,179999.10,90,0.05,Government
+2025-10-14,Gadget X,Asia Pacific,116999.10,90,0.10,SMB
+2025-10-15,Widget Lite,North America,23998.80,120,0.0,Education
+2025-10-17,Sensor V1,Europe,11984.00,152,0.05,Startup
+2025-10-18,Module Alpha,Latin America,48998.60,140,0.0,Enterprise
+2025-10-19,Widget Pro,North America,149700.00,300,0.0,Enterprise
+2025-10-20,Gadget Y,Middle East,80999.10,90,0.10,SMB
+2025-10-22,Platform Premium,North America,299990.00,100,0.0,Enterprise
+2025-10-23,Sensor V2,Europe,38997.00,300,0.0,Government
+2025-10-24,Module Beta,Asia Pacific,31248.75,125,0.0,Startup
+2025-10-25,Widget Lite,North America,29998.50,150,0.0,Education
+2025-10-27,Widget Pro,Europe,105883.16,225,0.15,SMB
+2025-10-28,Gadget X,North America,129999.00,100,0.0,Enterprise
+2025-10-29,Sensor V1,Latin America,9584.80,124,0.05,Startup
+2025-10-30,Platform Base,Asia Pacific,189998.95,95,0.05,Government
+2025-10-31,Module Alpha,North America,45498.70,130,0.0,Enterprise
+2025-11-01,Widget Pro,North America,137225.25,275,0.0,Enterprise
+2025-11-02,Gadget Y,Europe,98999.45,110,0.0,SMB
+2025-11-03,Sensor V2,Asia Pacific,42896.70,330,0.0,Startup
+2025-11-04,Widget Lite,Middle East,27598.63,138,0.05,Education
+2025-11-05,Module Beta,North America,34998.60,140,0.0,Government
+2025-11-07,Platform Premium,Europe,254991.15,85,0.10,Enterprise
+2025-11-08,Widget Pro,Asia Pacific,119800.20,240,0.0,SMB
+2025-11-09,Gadget X,North America,123499.05,95,0.05,Enterprise
+2025-11-10,Sensor V1,Europe,14382.00,184,0.05,Startup
+2025-11-12,Module Alpha,North America,55998.40,160,0.0,Enterprise
+2025-11-13,Gadget Y,Latin America,76499.33,85,0.0,SMB
+2025-11-14,Platform Base,North America,169999.15,85,0.05,Government
+2025-11-15,Widget Lite,Asia Pacific,25998.70,130,0.0,Education
+2025-11-17,Sensor V2,North America,50996.88,392,0.0,Enterprise
+2025-11-18,Widget Pro,Middle East,118750.50,250,0.05,SMB
+2025-11-19,Module Beta,Europe,29998.80,120,0.0,Startup
+2025-11-20,Gadget X,North America,116999.10,90,0.10,Enterprise
+2025-11-22,Platform Premium,Asia Pacific,284991.05,95,0.05,Enterprise
+2025-11-23,Widget Lite,North America,21998.90,110,0.0,Education
+2025-11-24,Sensor V1,Latin America,10384.70,133,0.05,Startup
+2025-11-25,Widget Pro,Europe,127350.00,270,0.05,Enterprise
+2025-11-27,Module Alpha,North America,48998.60,140,0.0,Government
+2025-11-28,Gadget Y,Asia Pacific,89099.56,99,0.0,SMB
+2025-11-29,Sensor V2,North America,53996.70,415,0.0,Enterprise
+2025-11-30,Platform Base,Middle East,159999.20,80,0.0,Government
+2025-12-01,Widget Pro,North America,162175.75,325,0.0,Enterprise
+2025-12-02,Gadget X,Europe,103999.20,80,0.0,SMB
+2025-12-03,Module Beta,Asia Pacific,33748.65,135,0.0,Startup
+2025-12-04,Sensor V1,North America,13584.30,172,0.05,Education
+2025-12-05,Widget Lite,Latin America,35998.20,180,0.0,SMB
+2025-12-07,Platform Premium,North America,314989.50,105,0.0,Enterprise
+2025-12-08,Module Alpha,Europe,45498.70,130,0.0,Government
+2025-12-09,Gadget Y,North America,94499.48,105,0.0,Enterprise
+2025-12-10,Widget Pro,Asia Pacific,130862.72,278,0.05,SMB
+2025-12-12,Sensor V2,North America,48096.63,370,0.0,Enterprise
+2025-12-13,Platform Base,Europe,179999.10,90,0.05,Government
+2025-12-14,Widget Lite,Middle East,23998.80,120,0.0,Education
+2025-12-15,Gadget X,North America,110499.15,85,0.0,Enterprise
+2025-12-17,Module Beta,North America,27498.90,110,0.0,Startup
+2025-12-18,Widget Pro,Europe,134812.50,300,0.10,Enterprise
+2025-12-19,Sensor V1,Asia Pacific,12784.00,164,0.05,SMB
+2025-12-20,Module Alpha,Latin America,41998.80,120,0.0,Enterprise
+2025-12-22,Gadget Y,North America,98999.45,110,0.0,Enterprise
+2025-12-23,Platform Premium,Asia Pacific,269991.00,90,0.10,Enterprise
+2025-12-24,Widget Lite,North America,27998.60,140,0.0,Education
+2025-12-25,Sensor V2,Europe,44196.60,340,0.0,Government
+2025-12-26,Widget Pro,North America,174650.00,350,0.0,Enterprise
+2025-12-27,Gadget X,Middle East,97499.25,75,0.0,SMB
+2025-12-28,Module Alpha,North America,52498.75,150,0.0,Government
+2025-12-29,Platform Base,Asia Pacific,169999.15,85,0.05,Enterprise
+2025-12-30,Widget Pro,Europe,142237.50,285,0.0,Enterprise
+2025-12-31,Gadget Y,North America,112499.38,125,0.0,Enterprise
+2025-10-06,Module Beta,North America,29998.80,120,0.0,SMB
+2025-10-11,Sensor V1,Asia Pacific,8784.60,112,0.05,Education
+2025-10-16,Widget Pro,Latin America,108712.88,218,0.0,Enterprise
+2025-10-21,Gadget X,North America,110499.15,85,0.0,SMB
+2025-10-26,Sensor V2,Europe,35097.30,270,0.0,Startup
+2025-11-06,Widget Pro,North America,142237.50,285,0.05,Enterprise
+2025-11-11,Gadget Y,Asia Pacific,84599.53,94,0.0,Startup
+2025-11-16,Module Alpha,Europe,41998.80,120,0.0,SMB
+2025-11-21,Platform Base,North America,189998.95,95,0.0,Enterprise
+2025-11-26,Sensor V1,North America,11184.60,143,0.05,Government
+2025-12-06,Widget Lite,North America,19998.90,100,0.0,Education
+2025-12-11,Gadget X,Asia Pacific,109199.18,84,0.05,Enterprise
+2025-12-16,Module Beta,Europe,27498.90,110,0.0,Startup
+2025-12-21,Widget Pro,North America,149700.00,300,0.0,Enterprise
+2025-10-09,Platform Premium,Latin America,239992.50,80,0.20,Enterprise
+2025-11-15,Sensor V1,Middle East,7184.55,92,0.05,SMB
+2025-12-05,Gadget Y,Europe,85499.55,95,0.0,Enterprise
+2025-12-15,Platform Base,North America,199998.95,100,0.0,Government
+2025-12-28,Widget Lite,Asia Pacific,31998.00,160,0.20,Startup
+2025-12-31,Module Alpha,North America,48998.60,140,0.0,Enterprise

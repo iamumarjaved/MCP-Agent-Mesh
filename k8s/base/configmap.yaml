@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-mesh-config
+  namespace: agent-mesh
+  labels:
+    app: agent-mesh
+    component: config
+data:
+  # Environment
+  ENVIRONMENT: "dev"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+
+  # Service URLs
+  ORCHESTRATOR_URL: "http://orchestrator:8000"
+  DATA_INGESTION_URL: "http://data-ingestion:8001"
+  ANALYTICS_URL: "http://analytics:8002"
+  INSIGHT_GENERATOR_URL: "http://insight-generator:8003"
+  PRESENTATION_URL: "http://presentation:8004"
+  GUARDIAN_URL: "http://guardian:8005"
+
+  # MCP Server URLs
+  DATA_ACCESS_MCP_URL: "http://data-access-mcp:9000"
+  COMPUTE_ENGINE_MCP_URL: "http://compute-engine-mcp:9001"
+  KNOWLEDGE_BASE_MCP_URL: "http://knowledge-base-mcp:9002"
+  RENDERING_ENGINE_MCP_URL: "http://rendering-engine-mcp:9003"
+  EVAL_GUARDS_MCP_URL: "http://eval-guards-mcp:9004"
+
+  # Infrastructure
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  QDRANT_HOST: "qdrant"
+  QDRANT_PORT: "6333"
+  LANGFUSE_HOST: "http://langfuse:3000"
+
+  # Azure OpenAI
+  AZURE_OPENAI_API_VERSION: "2024-02-01"
+  AZURE_OPENAI_DEPLOYMENT_GPT4O: "gpt-4o"
+  AZURE_OPENAI_DEPLOYMENT_GPT4O_MINI: "gpt-4o-mini"
+
+  # Application
+  MAX_CONCURRENT_TASKS: "10"
+  TASK_TIMEOUT_SECONDS: "300"
+  HEALTH_CHECK_INTERVAL: "30"

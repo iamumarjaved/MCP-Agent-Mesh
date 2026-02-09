@@ -1,0 +1,111 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qdrant
+  namespace: agent-mesh
+  labels:
+    app: agent-mesh
+    component: qdrant
+    tier: infrastructure
+    version: "1.7"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-mesh
+      component: qdrant
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: agent-mesh
+        component: qdrant
+        tier: infrastructure
+        version: "1.7"
+    spec:
+      containers:
+        - name: qdrant
+          image: qdrant/qdrant:v1.7.4
+          ports:
+            - containerPort: 6333
+              name: http
+              protocol: TCP
+            - containerPort: 6334
+              name: grpc
+              protocol: TCP
+          env:
+            - name: QDRANT__SERVICE__GRPC_PORT
+              value: "6334"
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: qdrant-storage
+              mountPath: /qdrant/storage
+      volumes:
+        - name: qdrant-storage
+          persistentVolumeClaim:
+            claimName: qdrant-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qdrant-pvc
+  namespace: agent-mesh
+  labels:
+    app: agent-mesh
+    component: qdrant
+    tier: infrastructure
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: managed-premium
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qdrant
+  namespace: agent-mesh
+  labels:
+    app: agent-mesh
+    component: qdrant
+    tier: infrastructure
+spec:
+  type: ClusterIP
+  selector:
+    app: agent-mesh
+    component: qdrant
+  ports:
+    - port: 6333
+      targetPort: http
+      protocol: TCP
+      name: http
+    - port: 6334
+      targetPort: grpc
+      protocol: TCP
+      name: grpc

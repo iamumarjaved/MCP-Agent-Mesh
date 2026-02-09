@@ -1,0 +1,110 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insight-generator
+  namespace: agent-mesh
+  labels:
+    app: agent-mesh
+    component: insight-generator
+    tier: agent
+    version: "1.0.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agent-mesh
+      component: insight-generator
+  template:
+    metadata:
+      labels:
+        app: agent-mesh
+        component: insight-generator
+        tier: agent
+        version: "1.0.0"
+    spec:
+      serviceAccountName: default
+      containers:
+        - name: insight-generator
+          image: ${ACR_LOGIN_SERVER}/agent-mesh-insight-generator:latest
+          ports:
+            - containerPort: 8003
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: agent-mesh-config
+          env:
+            - name: SERVICE_NAME
+              value: "insight-generator"
+            - name: SERVICE_PORT
+              value: "8003"
+            - name: AZURE_OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: agent-mesh-secrets
+                  key: azure-openai-api-key
+            - name: COSMOS_DB_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: agent-mesh-secrets
+                  key: cosmos-db-key
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: agent-mesh-secrets
+                  key: redis-password
+                  optional: true
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 12
+      nodeSelector:
+        nodepool: workload
+      tolerations: []
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: insight-generator
+  namespace: agent-mesh
+  labels:
+    app: agent-mesh
+    component: insight-generator
+    tier: agent
+spec:
+  type: ClusterIP
+  selector:
+    app: agent-mesh
+    component: insight-generator
+  ports:
+    - port: 8003
+      targetPort: http
+      protocol: TCP
+      name: http

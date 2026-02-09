@@ -1,0 +1,99 @@
+name: Security Scan
+
+on:
+  schedule:
+    # Run every Monday at 06:00 UTC
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+env:
+  ACR_REGISTRY: mcpmesh.azurecr.io
+
+jobs:
+  trivy-fs:
+    name: Filesystem Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy filesystem scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          format: sarif
+          output: trivy-fs-results.sarif
+          ignore-unfixed: true
+
+      - name: Upload SARIF results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-fs-results.sarif
+
+  trivy-containers:
+    name: Container Image Scan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: api
+            dockerfile: src/api/Dockerfile
+          - name: dashboard
+            dockerfile: src/dashboard/Dockerfile
+          - name: mcp-data-access
+            dockerfile: src/mcp_servers/data_access/Dockerfile
+          - name: mcp-compute-engine
+            dockerfile: src/mcp_servers/compute_engine/Dockerfile
+          - name: mcp-knowledge-base
+            dockerfile: src/mcp_servers/knowledge_base/Dockerfile
+          - name: mcp-rendering-engine
+            dockerfile: src/mcp_servers/rendering_engine/Dockerfile
+          - name: mcp-eval-guards
+            dockerfile: src/mcp_servers/eval_guards/Dockerfile
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          docker build -f ${{ matrix.image.dockerfile }} \
+            -t ${{ matrix.image.name }}:scan .
+
+      - name: Scan image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ matrix.image.name }}:scan
+          severity: HIGH,CRITICAL
+          format: table
+          exit-code: 0
+          ignore-unfixed: true
+
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry & export deps
+        run: |
+          pip install poetry
+          poetry export -f requirements.txt --output requirements.txt
+
+      - name: Audit with pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt --desc --fix --dry-run
+        continue-on-error: true
+
+      - name: Check for known vulnerabilities
+        uses: pypa/gh-action-pip-audit@v1.1.0
+        with:
+          inputs: requirements.txt
+        continue-on-error: true

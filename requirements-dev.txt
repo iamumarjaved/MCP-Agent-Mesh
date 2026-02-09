@@ -1,0 +1,27 @@
+# =============================================================================
+# MCP Agent Mesh -- Development Dependencies
+# =============================================================================
+# Install: pip install -r requirements-dev.txt
+# (includes all production dependencies)
+# =============================================================================
+
+-r requirements.txt
+
+# Testing
+pytest>=8.3.0,<9.0.0
+pytest-asyncio>=0.24.0,<1.0.0
+pytest-cov>=6.0.0,<7.0.0
+pytest-xdist>=3.5.0,<4.0.0
+
+# Load testing
+locust>=2.32.0,<3.0.0
+
+# Linting & formatting
+ruff>=0.8.0
+mypy>=1.13.0,<2.0.0
+
+# Pre-commit hooks
+pre-commit>=4.0.0,<5.0.0
+
+# WebSocket client for demos
+websockets>=14.0,<15.0

@@ -1,0 +1,183 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-rules
+  namespace: agent-mesh
+  labels:
+    app: agent-mesh
+    component: prometheus
+    tier: monitoring
+data:
+  alert-rules.yml: |
+    groups:
+      #########################################################################
+      # High Error Rate
+      #########################################################################
+      - name: error-rate-alerts
+        rules:
+          - alert: HighErrorRate
+            expr: |
+              (
+                sum(rate(http_requests_total{namespace="agent-mesh", status=~"5.."}[5m])) by (component)
+                /
+                sum(rate(http_requests_total{namespace="agent-mesh"}[5m])) by (component)
+              ) > 0.05
+            for: 5m
+            labels:
+              severity: critical
+              team: agent-mesh
+            annotations:
+              summary: "High error rate on {{ $labels.component }}"
+              description: >
+                Component {{ $labels.component }} has an error rate of
+                {{ printf "%.2f" $value }}% (threshold: 5%) over the last 5 minutes.
+              runbook_url: "https://runbooks.agent-mesh.internal/high-error-rate"
+
+          - alert: AgentErrorRate
+            expr: |
+              (
+                sum(rate(agent_task_errors_total{namespace="agent-mesh"}[5m])) by (component)
+                /
+                sum(rate(agent_tasks_total{namespace="agent-mesh"}[5m])) by (component)
+              ) > 0.10
+            for: 3m
+            labels:
+              severity: warning
+              team: agent-mesh
+            annotations:
+              summary: "High agent task error rate on {{ $labels.component }}"
+              description: >
+                Agent {{ $labels.component }} has a task error rate of
+                {{ printf "%.2f" $value }}% (threshold: 10%) over the last 5 minutes.
+
+      #########################################################################
+      # High Latency
+      #########################################################################
+      - name: latency-alerts
+        rules:
+          - alert: HighP99Latency
+            expr: |
+              histogram_quantile(0.99,
+                sum(rate(http_request_duration_seconds_bucket{namespace="agent-mesh"}[5m])) by (le, component)
+              ) > 5
+            for: 5m
+            labels:
+              severity: critical
+              team: agent-mesh
+            annotations:
+              summary: "High P99 latency on {{ $labels.component }}"
+              description: >
+                Component {{ $labels.component }} has P99 latency of
+                {{ printf "%.2f" $value }}s (threshold: 5s) over the last 5 minutes.
+              runbook_url: "https://runbooks.agent-mesh.internal/high-latency"
+
+          - alert: HighP95Latency
+            expr: |
+              histogram_quantile(0.95,
+                sum(rate(http_request_duration_seconds_bucket{namespace="agent-mesh"}[5m])) by (le, component)
+              ) > 2
+            for: 10m
+            labels:
+              severity: warning
+              team: agent-mesh
+            annotations:
+              summary: "Elevated P95 latency on {{ $labels.component }}"
+              description: >
+                Component {{ $labels.component }} has P95 latency of
+                {{ printf "%.2f" $value }}s (threshold: 2s) over the last 5 minutes.
+
+          - alert: MCPServerSlowResponse
+            expr: |
+              histogram_quantile(0.95,
+                sum(rate(mcp_tool_call_duration_seconds_bucket{namespace="agent-mesh"}[5m])) by (le, component)
+              ) > 3
+            for: 5m
+            labels:
+              severity: warning
+              team: agent-mesh
+            annotations:
+              summary: "MCP server {{ $labels.component }} responding slowly"
+              description: >
+                MCP server {{ $labels.component }} has P95 tool-call latency of
+                {{ printf "%.2f" $value }}s (threshold: 3s).
+
+      #########################################################################
+      # Budget / Cost Alerts
+      #########################################################################
+      - name: budget-alerts
+        rules:
+          - alert: BudgetExceeded
+            expr: |
+              sum(increase(openai_token_usage_total{namespace="agent-mesh"}[1h])) by (model)
+                * on(model) group_left() openai_cost_per_token > 10
+            for: 1m
+            labels:
+              severity: critical
+              team: agent-mesh
+            annotations:
+              summary: "OpenAI budget exceeded for model {{ $labels.model }}"
+              description: >
+                Estimated hourly cost for model {{ $labels.model }} has exceeded
+                $10/hour (current: ${{ printf "%.2f" $value }}/hour).
+              runbook_url: "https://runbooks.agent-mesh.internal/budget-exceeded"
+
+          - alert: HighTokenUsage
+            expr: |
+              sum(rate(openai_token_usage_total{namespace="agent-mesh"}[15m])) by (component) > 1000
+            for: 10m
+            labels:
+              severity: warning
+              team: agent-mesh
+            annotations:
+              summary: "High token consumption by {{ $labels.component }}"
+              description: >
+                Component {{ $labels.component }} is consuming
+                {{ printf "%.0f" $value }} tokens/sec (threshold: 1000/sec).
+
+      #########################################################################
+      # Availability / Pod Health
+      #########################################################################
+      - name: availability-alerts
+        rules:
+          - alert: PodCrashLooping
+            expr: |
+              increase(kube_pod_container_status_restarts_total{namespace="agent-mesh"}[1h]) > 3
+            for: 5m
+            labels:
+              severity: critical
+              team: agent-mesh
+            annotations:
+              summary: "Pod {{ $labels.pod }} is crash-looping"
+              description: >
+                Pod {{ $labels.pod }} in namespace {{ $labels.namespace }}
+                has restarted {{ printf "%.0f" $value }} times in the last hour.
+
+          - alert: PodNotReady
+            expr: |
+              kube_pod_status_ready{namespace="agent-mesh", condition="true"} == 0
+            for: 5m
+            labels:
+              severity: warning
+              team: agent-mesh
+            annotations:
+              summary: "Pod {{ $labels.pod }} is not ready"
+              description: >
+                Pod {{ $labels.pod }} has been in a non-ready state for more than 5 minutes.
+
+          - alert: HighMemoryUsage
+            expr: |
+              (
+                container_memory_working_set_bytes{namespace="agent-mesh"}
+                /
+                container_spec_memory_limit_bytes{namespace="agent-mesh"}
+              ) > 0.90
+            for: 5m
+            labels:
+              severity: warning
+              team: agent-mesh
+            annotations:
+              summary: "High memory usage on {{ $labels.pod }}"
+              description: >
+                Pod {{ $labels.pod }} is using {{ printf "%.0f" $value }}%
+                of its memory limit.
