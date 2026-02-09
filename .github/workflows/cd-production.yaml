@@ -1,0 +1,139 @@
+name: CD - Production
+
+on:
+  release:
+    types: [published]
+
+env:
+  ACR_REGISTRY: mcpmesh.azurecr.io
+  AKS_CLUSTER: mcpmesh-production
+  AKS_RESOURCE_GROUP: mcpmesh-prod-rg
+  NAMESPACE: agent-mesh
+
+jobs:
+  validate:
+    name: Pre-deploy Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry & dependencies
+        run: pip install poetry && poetry install --with dev --no-interaction
+
+      - name: Run full test suite
+        run: poetry run pytest tests/ -v --tb=short
+        env:
+          ENV: test
+
+  build-and-deploy:
+    name: Build & Deploy to Production
+    runs-on: ubuntu-latest
+    needs: validate
+    environment: production
+
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract release version
+        id: version
+        run: echo "TAG=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        run: az acr login --name mcpmesh
+
+      - name: Build and push API image
+        run: |
+          docker build -f src/api/Dockerfile \
+            -t ${{ env.ACR_REGISTRY }}/api:${{ steps.version.outputs.TAG }} \
+            -t ${{ env.ACR_REGISTRY }}/api:latest .
+          docker push ${{ env.ACR_REGISTRY }}/api:${{ steps.version.outputs.TAG }}
+          docker push ${{ env.ACR_REGISTRY }}/api:latest
+
+      - name: Build and push Dashboard image
+        run: |
+          docker build -f src/dashboard/Dockerfile \
+            -t ${{ env.ACR_REGISTRY }}/dashboard:${{ steps.version.outputs.TAG }} \
+            -t ${{ env.ACR_REGISTRY }}/dashboard:latest .
+          docker push ${{ env.ACR_REGISTRY }}/dashboard:${{ steps.version.outputs.TAG }}
+          docker push ${{ env.ACR_REGISTRY }}/dashboard:latest
+
+      - name: Build and push MCP server images
+        run: |
+          for server in data_access compute_engine knowledge_base rendering_engine eval_guards; do
+            docker build \
+              -f src/mcp_servers/${server}/Dockerfile \
+              -t ${{ env.ACR_REGISTRY }}/mcp-${server}:${{ steps.version.outputs.TAG }} \
+              -t ${{ env.ACR_REGISTRY }}/mcp-${server}:latest .
+            docker push ${{ env.ACR_REGISTRY }}/mcp-${server}:${{ steps.version.outputs.TAG }}
+            docker push ${{ env.ACR_REGISTRY }}/mcp-${server}:latest
+          done
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          cluster-name: ${{ env.AKS_CLUSTER }}
+          resource-group: ${{ env.AKS_RESOURCE_GROUP }}
+
+      - name: Deploy to AKS production
+        run: |
+          for manifest in k8s/production/*.yaml; do
+            sed -i "s|IMAGE_TAG|${{ steps.version.outputs.TAG }}|g" "$manifest"
+          done
+          kubectl apply -f k8s/production/ -n ${{ env.NAMESPACE }}
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/api -n ${{ env.NAMESPACE }} --timeout=600s
+          kubectl rollout status deployment/dashboard -n ${{ env.NAMESPACE }} --timeout=300s
+
+      - name: Production health check
+        run: |
+          API_URL=$(kubectl get svc api -n ${{ env.NAMESPACE }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          for i in 1 2 3 4 5; do
+            if curl -sf "http://${API_URL}:8000/health"; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying in 10s..."
+            sleep 10
+          done
+          echo "Health check failed after 5 attempts"
+          exit 1
+
+      - name: Notify success
+        if: success()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Production deployment successful: ${{ steps.version.outputs.TAG }} for ${{ github.repository }}"
+            }
+
+      - name: Notify failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "PRODUCTION DEPLOYMENT FAILED: ${{ steps.version.outputs.TAG }} for ${{ github.repository }}. Immediate attention required."
+            }

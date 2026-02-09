@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: agent-mesh
+
+commonLabels:
+  app: agent-mesh
+  managed-by: kustomize
+
+resources:
+  # Base
+  - base/namespace.yaml
+  - base/configmap.yaml
+  - base/network-policies.yaml
+
+  # Agents
+  - agents/orchestrator-deployment.yaml
+  - agents/data-ingestion-deployment.yaml
+  - agents/analytics-deployment.yaml
+  - agents/insight-generator-deployment.yaml
+  - agents/presentation-deployment.yaml
+  - agents/guardian-deployment.yaml
+
+  # MCP Servers
+  - mcp-servers/data-access-deployment.yaml
+  - mcp-servers/compute-engine-deployment.yaml
+  - mcp-servers/knowledge-base-deployment.yaml
+  - mcp-servers/rendering-engine-deployment.yaml
+  - mcp-servers/eval-guards-deployment.yaml
+
+  # Infrastructure
+  - infrastructure/ingress.yaml
+  - infrastructure/redis-deployment.yaml
+  - infrastructure/qdrant-deployment.yaml
+  - infrastructure/langfuse-deployment.yaml
+
+  # HPA
+  - hpa/agent-hpa.yaml
+  - hpa/mcp-server-hpa.yaml
+
+  # Monitoring
+  - monitoring/prometheus-config.yaml
+  - monitoring/alert-rules.yaml

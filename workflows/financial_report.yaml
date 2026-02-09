@@ -1,0 +1,156 @@
+name: financial_report
+description: >
+  Financial health check workflow. Analyzes key financial metrics,
+  compares against industry benchmarks and company targets, identifies
+  areas of concern, and generates an executive-level financial report.
+version: "1.0"
+
+triggers:
+  - keywords:
+      - financial report
+      - financial health
+      - financial analysis
+      - profit margin
+      - financial metrics
+      - budget analysis
+
+steps:
+  - id: load_actuals
+    agent: data-ingestion-v1
+    action: ingest_and_clean
+    params:
+      source: data/sample/sales_q4_2025.csv
+      cleaning_operations:
+        - dedup
+        - impute
+    depends_on: []
+    timeout: "60s"
+    retry: 3
+
+  - id: load_targets
+    agent: data-ingestion-v1
+    action: ingest_and_clean
+    params:
+      source: data/sample/company_targets.csv
+      cleaning_operations:
+        - dedup
+    depends_on: []
+    timeout: "30s"
+    retry: 2
+
+  - id: load_benchmarks
+    agent: insight-generator-v1
+    action: retrieve_benchmarks
+    params:
+      source: data/sample/industry_benchmarks.json
+      metrics:
+        - revenue_growth_yoy
+        - gross_margin
+        - net_margin
+        - revenue_per_employee
+    depends_on: []
+    timeout: "1m"
+    retry: 2
+
+  - id: revenue_analysis
+    agent: analytics-v1
+    action: run_statistics
+    params:
+      columns:
+        - revenue
+        - units_sold
+        - discount
+    depends_on:
+      - load_actuals
+    timeout: "2m"
+    retry: 2
+
+  - id: trend_analysis
+    agent: analytics-v1
+    action: analyze_trends
+    params:
+      date_column: date
+      value_column: revenue
+      period: monthly
+    depends_on:
+      - load_actuals
+    timeout: "2m"
+    retry: 2
+
+  - id: target_comparison
+    agent: analytics-v1
+    action: compare_targets
+    params:
+      metrics:
+        - revenue_target
+        - units_target
+        - margin_target
+    depends_on:
+      - revenue_analysis
+      - load_targets
+    timeout: "2m"
+    retry: 2
+
+  - id: financial_insights
+    agent: insight-generator-v1
+    action: generate_insights
+    params:
+      focus_areas:
+        - revenue_vs_target
+        - margin_analysis
+        - benchmark_comparison
+        - cost_efficiency
+        - growth_trajectory
+    depends_on:
+      - revenue_analysis
+      - trend_analysis
+      - target_comparison
+      - load_benchmarks
+    timeout: "3m"
+    retry: 2
+
+  - id: charts
+    agent: presentation-v1
+    action: generate_charts
+    params:
+      chart_types:
+        - actual_vs_target_bar
+        - revenue_trend_line
+        - margin_waterfall
+        - benchmark_comparison_radar
+    depends_on:
+      - revenue_analysis
+      - trend_analysis
+      - target_comparison
+    timeout: "2m"
+    retry: 1
+
+  - id: report
+    agent: presentation-v1
+    action: compile_report
+    params:
+      format: html
+      sections:
+        - executive_summary
+        - revenue_performance
+        - target_comparison
+        - margin_analysis
+        - trend_outlook
+        - benchmark_positioning
+        - risk_areas
+        - recommendations
+    depends_on:
+      - financial_insights
+      - charts
+    timeout: "3m"
+    retry: 2
+
+approval_gates:
+  - after: financial_insights
+    condition: "quality_score < 0.75"
+  - after: report
+    condition: "quality_score < 0.8"
+
+notifications:
+  on_complete: webhook
+  on_approval_needed: email

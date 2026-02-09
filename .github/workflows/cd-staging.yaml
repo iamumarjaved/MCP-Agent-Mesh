@@ -1,0 +1,93 @@
+name: CD - Staging
+
+on:
+  push:
+    branches: [develop]
+
+env:
+  ACR_REGISTRY: mcpmesh.azurecr.io
+  AKS_CLUSTER: mcpmesh-staging
+  AKS_RESOURCE_GROUP: mcpmesh-staging-rg
+  NAMESPACE: agent-mesh
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        run: az acr login --name mcpmesh
+
+      - name: Set image tag
+        id: tag
+        run: echo "TAG=staging-$(git rev-parse --short HEAD)-$(date +%Y%m%d%H%M%S)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push API image
+        run: |
+          docker build -f src/api/Dockerfile -t ${{ env.ACR_REGISTRY }}/api:${{ steps.tag.outputs.TAG }} .
+          docker push ${{ env.ACR_REGISTRY }}/api:${{ steps.tag.outputs.TAG }}
+
+      - name: Build and push Dashboard image
+        run: |
+          docker build -f src/dashboard/Dockerfile -t ${{ env.ACR_REGISTRY }}/dashboard:${{ steps.tag.outputs.TAG }} .
+          docker push ${{ env.ACR_REGISTRY }}/dashboard:${{ steps.tag.outputs.TAG }}
+
+      - name: Build and push MCP server images
+        run: |
+          for server in data_access compute_engine knowledge_base rendering_engine eval_guards; do
+            docker build \
+              -f src/mcp_servers/${server}/Dockerfile \
+              -t ${{ env.ACR_REGISTRY }}/mcp-${server}:${{ steps.tag.outputs.TAG }} .
+            docker push ${{ env.ACR_REGISTRY }}/mcp-${server}:${{ steps.tag.outputs.TAG }}
+          done
+
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          cluster-name: ${{ env.AKS_CLUSTER }}
+          resource-group: ${{ env.AKS_RESOURCE_GROUP }}
+
+      - name: Deploy to AKS staging
+        run: |
+          # Update image tags in k8s manifests
+          for manifest in k8s/staging/*.yaml; do
+            sed -i "s|IMAGE_TAG|${{ steps.tag.outputs.TAG }}|g" "$manifest"
+          done
+          kubectl apply -f k8s/staging/ -n ${{ env.NAMESPACE }}
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/api -n ${{ env.NAMESPACE }} --timeout=300s
+          kubectl rollout status deployment/dashboard -n ${{ env.NAMESPACE }} --timeout=300s
+
+      - name: Run smoke tests
+        run: |
+          API_URL=$(kubectl get svc api -n ${{ env.NAMESPACE }} -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          curl -sf "http://${API_URL}:8000/health" || exit 1
+        continue-on-error: true
+
+      - name: Notify on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": "Staging deployment failed for ${{ github.repository }} (${{ github.sha }})"
+            }

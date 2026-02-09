@@ -1,0 +1,186 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: src/api/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      redis:
+        condition: service_started
+      qdrant:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./workflows:/app/workflows
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: src/dashboard/Dockerfile
+    ports:
+      - "8501:8501"
+    env_file: .env
+    depends_on:
+      api:
+        condition: service_started
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # MCP Servers
+  # ---------------------------------------------------------------------------
+
+  mcp-data-access:
+    build:
+      context: .
+      dockerfile: src/mcp_servers/data_access/Dockerfile
+    ports:
+      - "9001:9001"
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-compute-engine:
+    build:
+      context: .
+      dockerfile: src/mcp_servers/compute_engine/Dockerfile
+    ports:
+      - "9002:9002"
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-knowledge-base:
+    build:
+      context: .
+      dockerfile: src/mcp_servers/knowledge_base/Dockerfile
+    ports:
+      - "9003:9003"
+    env_file: .env
+    depends_on:
+      qdrant:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-rendering-engine:
+    build:
+      context: .
+      dockerfile: src/mcp_servers/rendering_engine/Dockerfile
+    ports:
+      - "9004:9004"
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mcp-eval-guards:
+    build:
+      context: .
+      dockerfile: src/mcp_servers/eval_guards/Dockerfile
+    ports:
+      - "9005:9005"
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Infrastructure
+  # ---------------------------------------------------------------------------
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  langfuse:
+    image: langfuse/langfuse:latest
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://langfuse:langfuse@langfuse-db:5432/langfuse"
+      NEXTAUTH_SECRET: "change-me-in-production"
+      NEXTAUTH_URL: "http://localhost:3000"
+      SALT: "change-me-in-production"
+    depends_on:
+      langfuse-db:
+        condition: service_started
+    restart: unless-stopped
+
+  langfuse-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: langfuse
+      POSTGRES_DB: langfuse
+    volumes:
+      - langfuse_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  qdrant_data:
+  langfuse_data:
+
+networks:
+  default:
+    name: agent-mesh-network
